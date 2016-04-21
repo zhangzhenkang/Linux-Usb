@@ -1116,11 +1116,17 @@ static int storage_probe(struct usb_interface *intf,
 	result = usb_stor_probe2(us);
 	return result;
 }
+//this is the souece file usb.c
 // usb_driver located at /usr/src/linux-source/linux/include/linux/usb.h
 // extern int/function() 外部变量，引用定义在外部的变量
 static struct usb_driver usb_storage_driver = {
 	.name =		"usb-storage",				//U盘的名称
 	.probe =	storage_probe,				//探究，探测器，探测仪
+	/*.probe 
+	 * show the struct usb_device first
+	 *		struct device dev:属于每个设备的struct device;
+	 *		struct usb_interface is more important for device_driver
+	 */
 	.disconnect =	usb_stor_disconnect,	//切断，断开，分离
 	.suspend =	usb_stor_suspend,			//暂停，悬挂，中止
 	.resume =	usb_stor_resume,			//恢复，重新开始
@@ -1128,8 +1134,22 @@ static struct usb_driver usb_storage_driver = {
 	.pre_reset =	usb_stor_pre_reset,		//
 	.post_reset =	usb_stor_post_reset,	//邮寄，发布，张贴重置
 	.id_table =	usb_storage_usb_ids,		//id表格，列表
+	/*.id_table 模块计数，一个驱动可以对应多个设备，因此需要计数
+	* id_table 来自const struct usb_device_id *id_table
+	* 记录的是驱动所支持的设备类型/支持那些设备	
+	* struct usb_device_id comes from /include/linux/mod_devicetable.h
+	*/
 	.supports_autosuspend = 1,				//支持自动悬挂
 	.soft_unbind =	1,						//软件，解除绑定
 };
-
+//mosule_usb_driver located at /include/linux/usb.h#1186
 module_usb_driver(usb_storage_driver);
+//in this module,where has a usb_driver in  the usb core.
+/* usb 协议：
+ *			USB设备包含一些基本元素：描述符（分四类）,描述符中的都是固化的，不可改变的。
+ *				设备描述符
+ *				配置描述符
+ *				接口描述符
+ *				端点描述符
+ * 
+ */
