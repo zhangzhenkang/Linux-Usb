@@ -430,12 +430,16 @@ SkipForAbort:
  ***********************************************************************/
 
 /* Associate our private data with the USB device */
+/* associate 把...连接起来，使...联合起来*/
 static int associate_dev(struct us_data *us, struct usb_interface *intf)
 {
 	/* Fill in the device-related fields */
-	us->pusb_dev = interface_to_usbdev(intf);
+	us->pusb_dev = interface_to_usbdev(intf);//point of usb device
 	us->pusb_intf = intf;
-	us->ifnum = intf->cur_altsetting->desc.bInterfaceNumber;
+	us->ifnum = intf->cur_altsetting->desc.bInterfaceNumber;//一个设备可以有多个接口，接口的编号，
+															//固化在usb中，初始化时进行调用并赋值。
+	/*kernel 2.6中使用US_DEGUGP,not usb_stor_dbg*/
+	/*usb_stor_dbg located at /usb/storage/debug.h:#64*/
 	usb_stor_dbg(us, "Vendor: 0x%04x, Product: 0x%04x, Revision: 0x%04x\n",
 		     le16_to_cpu(us->pusb_dev->descriptor.idVendor),
 		     le16_to_cpu(us->pusb_dev->descriptor.idProduct),
@@ -445,9 +449,14 @@ static int associate_dev(struct us_data *us, struct usb_interface *intf)
 		     intf->cur_altsetting->desc.bInterfaceProtocol);
 
 	/* Store our private data in the interface */
+	//located at include/linux/usb.h:#194
+	//dev_set_drvdata located at include/linux/device.h:#845
+	//目的：&inif->dev->driver_data = us
 	usb_set_intfdata(intf, us);
 
 	/* Allocate the control/setup and DMA-mapped buffers */
+	/*申请内存,allocate：分配，buffers：缓冲区*/
+	//diff than kernel 2.6
 	us->cr = kmalloc(sizeof(*us->cr), GFP_KERNEL);
 	if (!us->cr)
 		return -ENOMEM;
@@ -577,6 +586,7 @@ static int get_device_info(struct us_data *us, const struct usb_device_id *id,
 	struct device *pdev = &us->pusb_intf->dev;
 
 	/* Store the entries */
+	//entries:入口
 	us->unusual_dev = unusual_dev;
 	us->subclass = (unusual_dev->useProtocol == USB_SC_DEVICE) ?
 			idesc->bInterfaceSubClass :
@@ -586,6 +596,7 @@ static int get_device_info(struct us_data *us, const struct usb_device_id *id,
 			unusual_dev->useTransport;
 	us->fflags = id->driver_info;
 	usb_stor_adjust_quirks(us->pusb_dev, &us->fflags);
+	//quirks: 怪癖，怪事。
 
 	if (us->fflags & US_FL_IGNORE_DEVICE) {
 		dev_info(pdev, "device ignored\n");
@@ -1160,5 +1171,4 @@ module_usb_driver(usb_storage_driver);
  *				端点描述符:U盘至少有两个端点，控制端点和批量端点。
  *					端点描述符中有描述四中不同的通信方式：控制传输，中断传输，批量传输和等时传输
  *					U盘使用Bulk-only传输协议：只有两种通信方式，控制和批量传输
- * 
  */
