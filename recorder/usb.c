@@ -930,7 +930,7 @@ int usb_stor_probe1(struct us_data **pus,
 	 * Ask the SCSI layer to allocate a host structure, with extra
 	 * space at the end for our private us_data structure.
 	 */
-	host = scsi_host_alloc(&usb_stor_host_template, sizeof(*us));
+	host = scsi_host_alloc(&usb_stor_host_template, sizeof(*us));//template:模板，样板.
 	if (!host) {
 		dev_warn(&intf->dev, "Unable to allocate the scsi host\n");
 		return -ENOMEM;
@@ -974,6 +974,7 @@ BadDevice:
 	return result;
 }
 EXPORT_SYMBOL_GPL(usb_stor_probe1);
+//EXPORT_SYMNOL_GPL模块导出符号
 
 /* Second part of general USB mass-storage probing */
 int usb_stor_probe2(struct us_data *us)
@@ -1057,6 +1058,12 @@ BadDevice:
 }
 EXPORT_SYMBOL_GPL(usb_stor_probe2);
 
+/*申请SCSIHost 需要三个函数：
+ *		1.scsi_host_alloc()为scsi_Host申请空间
+ *		2.scsi_add_host();
+ *		3.scsi_scan_host();
+ *
+ */
 /* Handle a USB mass-storage disconnect */
 void usb_stor_disconnect(struct usb_interface *intf)
 {
@@ -1072,7 +1079,7 @@ static int storage_probe(struct usb_interface *intf,
 			 const struct usb_device_id *id)
 {
 	struct us_unusual_dev *unusual_dev;
-	struct us_data *us;
+	struct us_data *us;//very important thing
 	int result;
 	int size;
 
@@ -1150,6 +1157,8 @@ module_usb_driver(usb_storage_driver);
  *				设备描述符
  *				配置描述符
  *				接口描述符
- *				端点描述符
+ *				端点描述符:U盘至少有两个端点，控制端点和批量端点。
+ *					端点描述符中有描述四中不同的通信方式：控制传输，中断传输，批量传输和等时传输
+ *					U盘使用Bulk-only传输协议：只有两种通信方式，控制和批量传输
  * 
  */
