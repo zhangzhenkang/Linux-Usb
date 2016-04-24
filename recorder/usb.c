@@ -617,7 +617,7 @@ static int get_device_info(struct us_data *us, const struct usb_device_id *id,
 				us->fflags);
 
 	/* Log a message if a non-generic unusual_dev entry contains an
-	 * unnecessary subclass or protocol override.  This may stimulate
+	 * unnecessary subclass or protocol override.  This may stimulate//激励鼓舞
 	 * reports from users that will help us remove unneeded entries
 	 * from the unusual_devs.h table.
 	 */
@@ -663,7 +663,7 @@ static void get_transport(struct us_data *us)
 		us->transport_name = "Control/Bulk";
 		us->transport = usb_stor_CB_transport;
 		us->transport_reset = usb_stor_CB_reset;
-		us->max_lun = 7;
+		us->max_lun = 7;//lun:logical unit number:逻辑单元数字.
 		break;
 
 	case USB_PR_CBI:
@@ -683,6 +683,7 @@ static void get_transport(struct us_data *us)
 
 /* Get the protocol settings */
 static void get_protocol(struct us_data *us)
+	//protocol: 协议
 {
 	switch (us->subclass) {
 	case USB_SC_RBC:
@@ -709,7 +710,7 @@ static void get_protocol(struct us_data *us)
 		break;
 
 	case USB_SC_SCSI:
-		us->protocol_name = "Transparent SCSI";
+		us->protocol_name = "Transparent SCSI";//USB using
 		us->proto_handler = usb_stor_transparent_scsi_command;
 		break;
 
