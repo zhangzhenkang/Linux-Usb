@@ -314,6 +314,7 @@ static int usb_stor_control_thread(void * __us)
 
 		/* lock the device pointers */
 		mutex_lock(&(us->dev_mutex));
+		//mutex : 互斥
 
 		/* lock access to the state */
 		scsi_lock(host);
@@ -727,10 +728,15 @@ static int get_pipes(struct us_data *us)
 	struct usb_host_interface *altsetting =
 		us->pusb_intf->cur_altsetting;
 	int i;
-	struct usb_endpoint_descriptor *ep;
-	struct usb_endpoint_descriptor *ep_in = NULL;
-	struct usb_endpoint_descriptor *ep_out = NULL;
-	struct usb_endpoint_descriptor *ep_int = NULL;
+	struct usb_endpoint_descriptor *ep;//临时指针
+	struct usb_endpoint_descriptor *ep_in = NULL;//Bulk-in端点
+	struct usb_endpoint_descriptor *ep_out = NULL;//Bulk-out 端点
+	struct usb_endpoint_descriptor *ep_int = NULL;//中断端点
+	//struct usb_endpoint_descriptor 中有bnAttributes表示传输属性
+	//00控制
+	//01等时
+	//10批量
+	//11中断
 
 	/*
 	 * Find the first endpoint of each type we need.
@@ -740,9 +746,10 @@ static int get_pipes(struct us_data *us)
 	 */
 	for (i = 0; i < altsetting->desc.bNumEndpoints; i++) {
 		ep = &altsetting->endpoint[i].desc;
-
-		if (usb_endpoint_xfer_bulk(ep)) {
-			if (usb_endpoint_dir_in(ep)) {
+		//usb_endpoint_xfer_bulk located in linux/usb/ch9.h
+		if (usb_endpoint_xfer_bulk(ep)) {//判断一个端点是不是批量端点,是则继续，否else
+			//是批量端点
+			if (usb_endpoint_dir_in(ep)) {//判断方向，0：OUT 1：IN
 				if (!ep_in)
 					ep_in = ep;
 			} else {
@@ -750,13 +757,14 @@ static int get_pipes(struct us_data *us)
 					ep_out = ep;
 			}
 		}
-
+		//不是批量端点,判断是否是中断端点/有中断你端点的支持CBI协议即Control/Bulk/Interrupt
+		//而U盘只支持Bulk-only协议，没有中断
 		else if (usb_endpoint_is_int_in(ep)) {
 			if (!ep_int)
 				ep_int = ep;
 		}
 	}
-
+	//检测是否符合标准，否则报错
 	if (!ep_in || !ep_out || (us->protocol == USB_PR_CBI && !ep_int)) {
 		usb_stor_dbg(us, "Endpoint sanity check failed! Rejecting dev.\n");
 		return -EIO;
@@ -777,14 +785,14 @@ static int get_pipes(struct us_data *us)
 	return 0;
 }
 
-/* Initialize all the dynamic resources we need */
+/* Initialize all the dynamic(动态的) resources we need */
 static int usb_stor_acquire_resources(struct us_data *us)
-{
+{//acquire 获取
 	int p;
 	struct task_struct *th;
 
-	us->current_urb = usb_alloc_urb(0, GFP_KERNEL);
-	if (!us->current_urb) {
+	us->current_urb = usb_alloc_urb(0, GFP_KERNEL);//usb request bulk -> urb .core of the whole usb system
+	if (!us->current_urb) {//判断是否申请成功
 		usb_stor_dbg(us, "URB allocation failed\n");
 		return -ENOMEM;
 	}
